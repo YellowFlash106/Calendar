@@ -1,0 +1,54 @@
+## Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## Build outputs
+dist/
+build/
+.turbo/
+.next/
+.out/
+
+## Vite / bundler
+.vite/
+/.cache/
+
+## TypeScript
+*.tsbuildinfo
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## Editor directories and files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+## System files
+.DS_Store
+Thumbs.db
+
+## Logs and temp
+*.log
+*.tmp
+
+## Coverage
+coverage/
+
+## Misc
+/.pnp
+.pnp.js
+
+## Additional common ignores
+.eslintcache
+.npm
+.nyc_output/
+.parcel-cache/
+public/build/
+*.tgz
