@@ -1,6 +1,6 @@
 // DemoPage.tsx — Shows WallCalendar with sample props
 
-import React, { useState } from "react";
+import { useState } from "react";
 import WallCalendar from "./WallCalendar";
 
 // Sample US holidays for 2025-2026

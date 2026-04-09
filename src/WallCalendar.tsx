@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import styles from "./WallCalendar.module.css";
 import {
-  formatDate,
   today,
   monthKey,
   shiftMonth,
@@ -61,11 +60,13 @@ const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_HEROES: Record<string, string> = {
   "01": "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=900&q=80",
   "02": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&q=80",
-  "03": "https://images.unsplash.com/photo-1490750967868-88df5691cc46?w=900&q=80",
+  // March — use a reliable placeholder image
+  "03": "https://picsum.photos/id/1018/900/600",
   "04": "https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=900&q=80",
   "05": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900&q=80",
   "06": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&q=80",
-  "07": "https://images.unsplash.com/photo-1473496169904-658ba7574b0d?w=900&q=80",
+  // July — use a reliable placeholder image
+  "07": "https://picsum.photos/id/1016/900/600",
   "08": "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=900&q=80",
   "09": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&q=80",
   "10": "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=900&q=80",
@@ -100,8 +101,13 @@ const WallCalendar: React.FC<WallCalendarProps> = ({
 
   // ── Resolve hero image ─────────────────────────────────────────────────────
   const mm = currentMonth.slice(5, 7);
+  const mmNoPad = String(parseInt(mm, 10));
   const resolvedHero: HeroImage =
+    // prefer full-year key ("YYYY-MM"), then month-only keys like "03" or "3",
+    // then fallback to provided defaultHero or built-in MONTH_HEROES
     heroImages[mKey] ??
+    heroImages[mm] ??
+    heroImages[mmNoPad] ??
     defaultHero ?? {
       src: MONTH_HEROES[mm] ?? MONTH_HEROES["01"],
       alt: `${monthName(currentMonth)} scenery`,
