@@ -1,6 +1,6 @@
 # 📅 WallCalendar
 
-A polished, physical wall calendar React component with integrated notes, date-range selection, hero imagery, and LocalStorage persistence.
+A compact React wall-calendar component with notes, date-range selection, hero imagery, and LocalStorage persistence. This README reflects the recent refactor (components extracted to `src/components`) and added env helpers.
 
 ---
 
@@ -10,7 +10,7 @@ A polished, physical wall calendar React component with integrated notes, date-r
 # 1. Install dependencies
 npm install
 
-# 2. Start dev server (localhost:3000)
+# 2. Start dev server (localhost:5173)
 npm run dev
 
 # 3. Type check
@@ -18,6 +18,9 @@ npm run type-check
 
 # 4. Production build → dist/
 npm run build
+
+# 5. Preview production build
+npm run preview
 ```
 
 ---
@@ -26,19 +29,42 @@ npm run build
 
 ```
 wall-calendar/
-├── index.html                    # Entry HTML (loads Google Fonts)
+├── index.html
 ├── vite.config.ts
 ├── tsconfig.json
 ├── package.json
 └── src/
-    ├── main.tsx                  # React root
-    ├── DemoPage.tsx              # Demo page with theme toggle
-    ├── WallCalendar.tsx          # ← Main component
-    ├── WallCalendar.module.css   # ← All styles (CSS Modules)
+    ├── main.tsx
+    ├── DemoPage.tsx
+    ├── WallCalendar.tsx          # Main component (composes subcomponents)
+    ├── WallCalendar.module.css
+    ├── components/
+    │   ├── HeroPanel.tsx
+    │   ├── CalendarGrid.tsx
+    │   └── NotesPanel.tsx
     └── utils/
-        ├── dateUtils.ts          # Pure date helpers
-        └── storage.ts            # LocalStorage helpers
+        ├── dateUtils.ts
+        └── storage.ts
 ```
+
+---
+
+## Environment files
+
+This project uses Vite env vars. Example files added to the repo:
+
+- `.env.development` — development defaults
+- `.env.production` — production defaults
+- `.env.local.example` — copy to `.env.local` for local secrets (ignored by git)
+
+Vite requires env keys to be prefixed with `VITE_`. Example keys included:
+
+```
+VITE_APP_NAME="Wall Calendar"
+VITE_API_URL="http://localhost:3000/api"
+```
+
+Do not commit `.env.local`.
 
 ---
 
@@ -49,124 +75,63 @@ import WallCalendar from "./WallCalendar";
 
 <WallCalendar
   heroImages={{
-    "2025-07": {
-      src: "/images/summer.jpg",
-      alt: "Beach at sunset",
-      accent: "#f59e0b",
-    },
+    "2025-07": { src: "/images/summer.jpg", alt: "Beach at sunset", accent: "#f59e0b" }
   }}
-  defaultHero={{
-    src: "/images/default.jpg",
-    alt: "Scenic landscape",
-  }}
+  defaultHero={{ src: "/images/default.jpg", alt: "Scenic landscape" }}
   initialMonth="2025-07-01"
-  holidays={{
-    "2025-07-04": "Independence Day",
-    "2025-12-25": "Christmas",
-  }}
-  theme="dark"   // "light" | "dark"
+  holidays={{ "2025-07-04": "Independence Day", "2025-12-25": "Christmas" }}
+  theme="dark"
 />
 ```
 
-### Props
+### Key props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `heroImages` | `Record<"YYYY-MM", HeroImage>` | `{}` | Per-month hero photos |
-| `defaultHero` | `HeroImage` | Built-in Unsplash | Fallback image |
-| `initialMonth` | `DateString` | Today | First month shown |
-| `holidays` | `Record<DateString, string>` | `{}` | Date → label map |
-| `theme` | `"light" \| "dark"` | `"dark"` | Color theme |
+- `heroImages` — `Record<"YYYY-MM", HeroImage>` (per-month images)
+- `defaultHero` — fallback `HeroImage`
+- `initialMonth` — `DateString` for initial view
+- `holidays` — `Record<DateString, string>` map
+- `theme` — `"light" | "dark"`
 
-### `HeroImage` shape
+`HeroImage`:
 
 ```ts
-interface HeroImage {
-  src: string;      // URL or local path
-  alt?: string;
-  accent?: string;  // CSS color for accent override
-}
+interface HeroImage { src: string; alt?: string; accent?: string }
 ```
 
 ---
 
 ## Persistence
 
-Data is auto-saved to `localStorage` with a 400ms debounce. Keys follow the pattern:
+Data auto-saves to `localStorage` (400ms debounce). Keys use `wallcal_<YYYY-MM>` and store `{ generalNote, rangeStart, rangeEnd, rangeNote }`.
 
-```
-wallcal_2025-07   →  { generalNote, rangeStart, rangeEnd, rangeNote }
-```
+Export / Import via UI:
 
-### Export / Import
+- Export downloads `wall-calendar-notes.json`
+- Import merges JSON into `localStorage`
 
-- **Export**: Click "Export JSON" — downloads `wall-calendar-notes.json`  
-- **Import**: Click "Import" — loads a previously exported JSON, merges with existing data
-- Both are available via `exportAllData()` and `importAllData(json)` utilities in `storage.ts`
+Utility functions: `exportAllData()` and `importAllData(json)` in `src/utils/storage.ts`.
 
 ---
 
-## Customising Hero Images
+## Deployment
 
-**Option A — URL per month** (recommended for web):
-```tsx
-heroImages={{
-  "2025-12": { src: "https://your-cdn.com/winter.jpg", alt: "Snow" },
-}}
-```
+Any static host supporting Vite output works (Vercel, Netlify, GitHub Pages).
 
-**Option B — local assets** (Vite):
-```tsx
-import summerImg from "./assets/summer.jpg";
-heroImages={{ "2025-07": { src: summerImg } }}
-```
+Simple Vercel/Netlify steps:
 
-**Option C — default fallback**: The component ships built-in Unsplash URLs per month (no CORS issues). Replace `MONTH_HEROES` in `WallCalendar.tsx` to swap all defaults at once.
+1. Push the repo to GitHub.
+2. Connect the repo in Vercel/Netlify.
+3. Set build command: `npm run build` and publish directory: `dist`.
+4. Optionally add env vars in the host dashboard (use `VITE_` prefixes).
 
 ---
 
-## Date Range Selection
+## Notes
 
-1. **Click** any day → sets range start (highlighted in amber)
-2. **Hover** → preview of the range
-3. **Click** a second day → sets range end, highlights the span
-4. **Clear** → "✕ clear" button or "Clear month" resets selection
-5. **Keyboard** → Tab to a cell, Space/Enter to select
+- Components have been extracted to `src/components` for readability and easier testing.
+- Accessibility: grid roles, `aria-label` on cells, keyboard selection supported.
+- Styling is CSS Modules; design tokens exposed via CSS custom properties on `.calendar`.
 
 ---
 
-## Accessibility
-
-- `role="grid"` / `role="gridcell"` on the calendar
-- `aria-label` on every day cell (includes today/holiday/range metadata)
-- `aria-pressed` on start/end cells
-- Full keyboard support: Tab navigation + Enter/Space selection
-- `prefers-reduced-motion` media query disables all animations
-
----
-
-## Styling & Theming
-
-All design tokens are CSS custom properties on `.calendar`:
-
-```css
---accent          /* amber highlight color */
---surface         /* panel background */
---text-primary    /* main text */
---font-display    /* Playfair Display (serif) */
---font-body       /* DM Sans */
-```
-
-Override in your own CSS to retheme without touching component code:
-
-```css
-.my-wrapper :global(.calendar) {
-  --accent: #6366f1;   /* indigo accent */
-}
-```
-
----
-
-## Browser Support
-
-ES2020+, all modern browsers. LocalStorage required for persistence (gracefully degrades — data is just not saved if unavailable).
+If you'd like, I can also add a CI workflow for automated builds and deploys (GitHub Actions, Vercel auto-deploy, or Netlify). 
