@@ -1,4 +1,3 @@
-// WallCalendar.tsx
 import React, {
   useState,
   useEffect,
@@ -14,12 +13,12 @@ import {
   monthName,
   yearOf,
   getMonthMatrix,
-  isInRange,
-  isRangeStart,
-  isRangeEnd,
   parseDate,
   DateString,
 } from "./utils/dateUtils";
+import HeroPanel from "./components/HeroPanel";
+import CalendarGrid from "./components/CalendarGrid";
+import NotesPanel from "./components/NotesPanel";
 import {
   loadMonthData,
   saveMonthData,
@@ -235,42 +234,7 @@ const WallCalendar: React.FC<WallCalendarProps> = ({
       className={`${styles.calendar} ${styles[theme]}`}
       data-testid="wall-calendar"
     >
-      {/* ── Hero Panel ────────────────────────────────────────────── */}
-      <div className={`${styles.heroPanel} ${transitioning ? styles.fadeOut : styles.fadeIn}`}>
-        <div className={styles.heroImageWrap}>
-          <img
-            src={resolvedHero.src}
-            alt={resolvedHero.alt ?? "Calendar hero"}
-            className={styles.heroImage}
-            loading="lazy"
-          />
-          <div className={styles.heroOverlay} />
-        </div>
-
-        <div className={styles.monthBadge}>
-          <span className={styles.monthName}>{monthName(currentMonth)}</span>
-          <span className={styles.yearLabel}>{yearOf(currentMonth)}</span>
-        </div>
-
-        <div className={styles.heroNav}>
-          <button
-            className={styles.navBtn}
-            onClick={() => navigate(-1)}
-            aria-label="Previous month"
-            disabled={transitioning}
-          >
-            ‹
-          </button>
-          <button
-            className={styles.navBtn}
-            onClick={() => navigate(1)}
-            aria-label="Next month"
-            disabled={transitioning}
-          >
-            ›
-          </button>
-        </div>
-      </div>
+      <HeroPanel hero={resolvedHero} monthLabel={monthName(currentMonth)} yearLabel={yearOf(currentMonth)} onPrev={() => navigate(-1)} onNext={() => navigate(1)} transitioning={transitioning} />
 
       {/* ── Calendar + Notes Panel ─────────────────────────────────── */}
       <div className={styles.rightPanel}>
@@ -284,127 +248,12 @@ const WallCalendar: React.FC<WallCalendarProps> = ({
           ))}
         </div>
 
-        {/* Grid */}
-        <div
-          className={`${styles.grid} ${transitioning ? styles.gridFadeOut : styles.gridFadeIn}`}
-          role="grid"
-          aria-label={`${monthName(currentMonth)} ${yearOf(currentMonth)} calendar`}
-        >
-          {matrix.map((row, ri) => (
-            <div key={ri} className={styles.gridRow} role="row">
-              {row.map((cell) => {
-                const inRange = isInRange(cell.date, data.rangeStart, previewEnd ?? null);
-                const isStart = isRangeStart(cell.date, data.rangeStart);
-                const isEnd = isRangeEnd(cell.date, previewEnd ?? null, data.rangeStart);
-                const holiday = holidays[cell.date];
-
-                return (
-                  <button
-                    key={cell.date}
-                    role="gridcell"
-                    className={[
-                      styles.dayCell,
-                      !cell.isCurrentMonth && styles.otherMonth,
-                      cell.isToday && styles.todayCell,
-                      isStart && styles.rangeStart,
-                      isEnd && styles.rangeEnd,
-                      inRange && !isStart && !isEnd && styles.inRange,
-                      holiday && styles.holidayCell,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={() => handleDayClick(cell.date)}
-                    onKeyDown={(e) => handleDayKeyDown(e, cell.date)}
-                    onMouseEnter={() => setHoverDate(cell.date)}
-                    onMouseLeave={() => setHoverDate(null)}
-                    aria-label={`${cell.date}${cell.isToday ? " (today)" : ""}${holiday ? `, ${holiday}` : ""}${isStart ? " (range start)" : ""}${isEnd ? " (range end)" : ""}`}
-                    aria-pressed={isStart || isEnd}
-                    tabIndex={cell.isCurrentMonth ? 0 : -1}
-                  >
-                    <span className={styles.dayNumber}>{cell.day}</span>
-                    {holiday && (
-                      <span className={styles.holidayDot} title={holiday} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+        <div className={`${styles.grid} ${transitioning ? styles.gridFadeOut : styles.gridFadeIn}`} role="grid" aria-label={`${monthName(currentMonth)} ${yearOf(currentMonth)} calendar`}>
+          <CalendarGrid matrix={matrix} data={data} previewEnd={previewEnd} holidays={holidays} onDayClick={handleDayClick} onDayKeyDown={handleDayKeyDown} onHover={(d) => setHoverDate(d)} />
         </div>
 
         {/* ── Notes Section ─────────────────────────────────────────── */}
-        <div className={styles.notesSection}>
-          <div className={styles.notesHeader}>
-            <span className={styles.notesTitle}>Notes</span>
-            <div className={styles.noteActions}>
-              <button
-                className={styles.clearBtn}
-                onClick={handleClearMonth}
-                title="Clear all notes for this month"
-              >
-                Clear month
-              </button>
-              <button className={styles.exportBtn} onClick={handleExport} title="Export notes">
-                Export JSON
-              </button>
-              <label className={styles.importLabel} title="Import notes">
-                Import
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleImport}
-                  className={styles.hiddenInput}
-                />
-              </label>
-            </div>
-          </div>
-
-          {importError && (
-            <p className={styles.errorMsg}>{importError}</p>
-          )}
-
-          <textarea
-            className={styles.noteArea}
-            placeholder={`General notes for ${monthName(currentMonth)}…`}
-            value={data.generalNote}
-            onChange={(e) => handleGeneralNote(e.target.value)}
-            aria-label="General monthly notes"
-            rows={3}
-          />
-
-          {/* Range note */}
-          <div className={styles.rangeNoteSection}>
-            <div className={styles.rangeStatus}>
-              {rangeLabel ? (
-                <>
-                  <span className={styles.rangeLabel}>{rangeLabel}</span>
-                  <button
-                    className={styles.clearSelBtn}
-                    onClick={clearSelection}
-                    aria-label="Clear date selection"
-                  >
-                    ✕ clear
-                  </button>
-                </>
-              ) : (
-                <span className={styles.rangeHint}>
-                  Click two dates to select a range
-                </span>
-              )}
-            </div>
-
-            {data.rangeStart && (
-              <textarea
-                className={styles.noteArea}
-                placeholder="Notes for selected date range…"
-                value={data.rangeNote}
-                onChange={(e) => handleRangeNote(e.target.value)}
-                aria-label="Date range notes"
-                rows={2}
-              />
-            )}
-          </div>
-        </div>
+        <NotesPanel data={data} monthLabel={monthName(currentMonth)} exportJSON={handleExport} onImportFile={handleImport} onClearMonth={handleClearMonth} onGeneralNote={handleGeneralNote} onRangeNote={handleRangeNote} rangeLabel={rangeLabel} clearSelection={clearSelection} importError={importError} />
       </div>
     </div>
   );

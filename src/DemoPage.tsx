@@ -1,5 +1,3 @@
-// DemoPage.tsx — Shows WallCalendar with sample props
-
 import { useState } from "react";
 import WallCalendar from "./WallCalendar";
 
